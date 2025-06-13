@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 11% 8%; /* #1A1A1A */
+  --foreground: 0 0% 98%;
+  --muted: 210 11% 18%; /* #2D2D2D */
+  --muted-foreground: 210 5% 64.9%;
+  --popover: 210 11% 8%;
+  --popover-foreground: 0 0% 98%;
+  --card: 210 11% 18%; /* #2D2D2D */
+  --card-foreground: 0 0% 98%;
+  --border: 210 11% 25%; /* #404040 */
+  --input: 210 11% 25%;
+  --primary: 45 100% 51%; /* #D4AF37 */
+  --primary-foreground: 210 11% 8%;
+  --secondary: 210 11% 18%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 210 11% 25%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 45 100% 51%;
+  --radius: 0.5rem;
+  
+  /* Custom gold colors */
+  --gold: 45 100% 51%; /* #D4AF37 */
+  --gold-light: 45 65% 85%; /* #F4E4BC */
+  --black-primary: 210 11% 8%; /* #1A1A1A */
+  --black-secondary: 210 11% 18%; /* #2D2D2D */
+  --black-accent: 210 11% 25%; /* #404040 */
+}
+
+.dark {
+  --background: 210 11% 8%;
+  --foreground: 0 0% 98%;
+  --muted: 210 11% 18%;
+  --muted-foreground: 210 5% 64.9%;
+  --popover: 210 11% 8%;
+  --popover-foreground: 0 0% 98%;
+  --card: 210 11% 18%;
+  --card-foreground: 0 0% 98%;
+  --border: 210 11% 25%;
+  --input: 210 11% 25%;
+  --primary: 45 100% 51%;
+  --primary-foreground: 210 11% 8%;
+  --secondary: 210 11% 18%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 210 11% 25%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 45 100% 51%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-black-primary text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gold {
+    color: hsl(var(--gold));
+  }
+  
+  .gold-light {
+    color: hsl(var(--gold-light));
+  }
+  
+  .bg-gold {
+    background-color: hsl(var(--gold));
+  }
+  
+  .bg-gold-light {
+    background-color: hsl(var(--gold-light));
+  }
+  
+  .bg-black-primary {
+    background-color: hsl(var(--black-primary));
+  }
+  
+  .bg-black-secondary {
+    background-color: hsl(var(--black-secondary));
+  }
+  
+  .bg-black-accent {
+    background-color: hsl(var(--black-accent));
+  }
+  
+  .border-black-accent {
+    border-color: hsl(var(--black-accent));
+  }
+  
+  .product-card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .product-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(212, 175, 55, 0.1);
+  }
+  
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--gold-light)) 100%);
+  }
+  
+  .search-focus:focus {
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+  }
+}

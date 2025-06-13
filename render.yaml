@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: vmake-product-catalog
+    env: node
+    plan: free
+    buildCommand: rm -rf node_modules package-lock.json && npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        # Replace with your actual PostgreSQL database URL
+        # Format: postgres://username:password@host:port/database?sslmode=require
+        value: YOUR_DATABASE_URL_HERE
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_WHATSAPP
+        # Replace with your admin WhatsApp number
+        value: YOUR_ADMIN_WHATSAPP_NUMBER
+      - key: BCRYPT_SALT_ROUNDS
+        value: 12
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: AUTH_RATE_LIMIT_MAX_REQUESTS
+        value: 5
+      - key: MAX_FILE_SIZE
+        value: 104857600
