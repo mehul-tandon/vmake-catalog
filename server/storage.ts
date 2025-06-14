@@ -1,3 +1,8 @@
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
+
 import { users, products, wishlists, type User, type InsertUser, type Product, type InsertProduct, type Wishlist, type InsertWishlist } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, sql, and, desc, asc } from "drizzle-orm";
@@ -40,6 +45,9 @@ export interface IStorage {
   getAvailableCategories(filters: { finish?: string; material?: string }): Promise<string[]>;
   getAvailableFinishes(filters: { category?: string; material?: string }): Promise<string[]>;
   getAvailableMaterials(filters: { category?: string; finish?: string }): Promise<string[]>;
+
+  // Health check method
+  testConnection(): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -63,17 +71,20 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
-    // Create admin user
+    // Create admin user - hardcoded for development
+    const adminWhatsApp = "+918882636296"; // Your WhatsApp number
+    console.log("Creating admin user with WhatsApp:", adminWhatsApp);
     const adminUser: User = {
       id: this.currentUserId++,
       name: "Admin User",
-      whatsappNumber: "+1234567890",
+      whatsappNumber: adminWhatsApp,
       password: null,
       isAdmin: true,
       isPrimaryAdmin: true,
       createdAt: new Date(),
     };
     this.users.set(adminUser.id, adminUser);
+    console.log("Admin user created:", { id: adminUser.id, whatsappNumber: adminUser.whatsappNumber });
 
     // Create sample products with multiple images
     const sampleProducts: any[] = [
@@ -593,6 +604,11 @@ export class MemStorage implements IStorage {
 
     return this.users.delete(id);
   }
+
+  async testConnection(): Promise<boolean> {
+    // For memory storage, always return true since it's always available
+    return true;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -959,6 +975,17 @@ export class DatabaseStorage implements IStorage {
 
     const result = await query;
     return result.map((r: any) => r.material).filter(Boolean).sort();
+  }
+
+  async testConnection(): Promise<boolean> {
+    try {
+      // Try to execute a simple query to test the database connection
+      await db.select().from(users).limit(1);
+      return true;
+    } catch (error) {
+      console.error('Database connection test failed:', error);
+      return false;
+    }
   }
 }
 
