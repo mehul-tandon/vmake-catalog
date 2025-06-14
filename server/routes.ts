@@ -1,15 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertProductSchema, insertWishlistSchema, insertFeedbackSchema, adminLoginSchema, type User, type Feedback, users } from "@shared/schema";
-import { db, pool } from "./db";
-import { eq } from "drizzle-orm";
+import { insertUserSchema, insertProductSchema, insertWishlistSchema, insertFeedbackSchema, adminLoginSchema, type User, type Feedback } from "@shared/schema";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import * as fs from "fs";
 import * as path from "path";
 import bcrypt from "bcrypt";
 import csvParser from "csv-parser";
+import { initializeDatabase } from "./migrate";
 
 // Configure multer with increased file size limit (100MB)
 const upload = multer({
@@ -37,7 +36,19 @@ async function verifyPassword(password: string, hashedPassword: string): Promise
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Database initialization endpoint (for production deployment)
+  // Database initialization endpoint (for production deployment) - GET version
+  app.get('/api/init-db', async (_req, res) => {
+    try {
+      console.log('Database initialization requested via GET');
+      await initializeDatabase();
+      res.json({ message: 'Database initialized successfully' });
+    } catch (error) {
+      console.error('Database initialization error:', error);
+      res.status(500).json({ error: 'Failed to initialize database' });
+    }
+  });
+
+  // Database initialization endpoint (for production deployment) - POST version
   app.post('/api/init-db', async (req, res) => {
     try {
       console.log('Database initialization requested');
@@ -48,41 +59,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      try {
-        await db.select().from(users).limit(1);
-        console.log('Database tables already exist');
-      } catch (error: any) {
-        if (error.code === '42P01') {
-          console.log('Creating database tables...');
-
-          await pool.query(`CREATE TABLE IF NOT EXISTS "users" ("id" serial PRIMARY KEY NOT NULL, "name" varchar(255) NOT NULL, "whatsappNumber" varchar(20) NOT NULL, "password" varchar(255), "isAdmin" boolean DEFAULT false NOT NULL, "isPrimaryAdmin" boolean DEFAULT false NOT NULL, "createdAt" timestamp DEFAULT now() NOT NULL, "updatedAt" timestamp DEFAULT now() NOT NULL, CONSTRAINT "users_whatsappNumber_unique" UNIQUE("whatsappNumber"));`);
-
-          await pool.query(`CREATE TABLE IF NOT EXISTS "products" ("id" serial PRIMARY KEY NOT NULL, "name" varchar(255) NOT NULL, "code" varchar(100) NOT NULL, "category" varchar(100), "length" numeric(10,2) DEFAULT 0, "breadth" numeric(10,2) DEFAULT 0, "height" numeric(10,2) DEFAULT 0, "finish" varchar(100), "material" varchar(100), "imageUrl" varchar(500), "imageUrls" text, "description" text, "status" varchar(50), "createdAt" timestamp DEFAULT now() NOT NULL, "updatedAt" timestamp DEFAULT now() NOT NULL, CONSTRAINT "products_code_unique" UNIQUE("code"));`);
-
-          await pool.query(`CREATE TABLE IF NOT EXISTS "wishlists" ("id" serial PRIMARY KEY NOT NULL, "userId" integer NOT NULL, "productId" integer NOT NULL, "createdAt" timestamp DEFAULT now() NOT NULL, CONSTRAINT "wishlists_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action, "wishlists_productId_products_id_fk" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action);`);
-
-          await pool.query(`CREATE TABLE IF NOT EXISTS "user_sessions" ("sid" varchar NOT NULL, "sess" json NOT NULL, "expire" timestamp(6) NOT NULL, CONSTRAINT "session_pkey" PRIMARY KEY ("sid"));`);
-
-          console.log('Database tables created successfully');
-        } else {
-          throw error;
-        }
-      }
-
-      const existingAdmin = await db.select().from(users).where(eq(users.isPrimaryAdmin, true)).limit(1);
-      if (existingAdmin.length > 0) {
-        return res.json({ message: 'Database already initialized', admin: existingAdmin[0].name });
-      }
-
-      const newAdmin = await db.insert(users).values({
-        name: 'Admin User',
-        whatsappNumber: '+918882636296',
-        password: null,
-        isAdmin: true,
-        isPrimaryAdmin: true,
-      }).returning();
-
-      res.json({ message: 'Database initialized successfully', admin: newAdmin[0].name, whatsappNumber: newAdmin[0].whatsappNumber });
+      await initializeDatabase();
+      res.json({ message: 'Database initialized successfully' });
     } catch (error) {
       console.error('Database initialization error:', error);
       res.status(500).json({ error: 'Failed to initialize database' });
