@@ -1,3 +1,8 @@
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
+
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
@@ -10,6 +15,7 @@ import { users } from "../shared/schema";
 import { eq } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 import MemoryStore from "memorystore";
+import { initializeDatabase } from "./migrate";
 
 const app = express();
 
@@ -112,123 +118,6 @@ app.use(session({
   }
 }));
 
-// Database initialization endpoint (for production deployment) - MOVED HERE BEFORE registerRoutes
-app.post('/api/init-db', async (req: express.Request, res: express.Response) => {
-  try {
-    console.log('Database initialization requested');
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-
-    const { initKey } = req.body;
-    
-    // Security check - only allow with correct key
-    const validKeys = [
-      process.env.SESSION_SECRET,
-      'default-init-key' // fallback key - change this in production
-    ];
-
-    if (!validKeys.includes(initKey)) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // First, ensure database tables exist by running a simple query
-    // If it fails, we know tables don't exist
-    try {
-      await db.select().from(users).limit(1);
-      console.log('Database tables already exist');
-    } catch (error: any) {
-      if (error.code === '42P01') { // Table does not exist
-        console.log('Creating database tables...');
-
-        // Create tables using raw SQL since Drizzle push might not work in production
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS "users" (
-            "id" serial PRIMARY KEY NOT NULL,
-            "name" varchar(255) NOT NULL,
-            "whatsappNumber" varchar(20) NOT NULL,
-            "password" varchar(255),
-            "isAdmin" boolean DEFAULT false NOT NULL,
-            "isPrimaryAdmin" boolean DEFAULT false NOT NULL,
-            "createdAt" timestamp DEFAULT now() NOT NULL,
-            "updatedAt" timestamp DEFAULT now() NOT NULL,
-            CONSTRAINT "users_whatsappNumber_unique" UNIQUE("whatsappNumber")
-          );
-        `);
-
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS "products" (
-            "id" serial PRIMARY KEY NOT NULL,
-            "name" varchar(255) NOT NULL,
-            "code" varchar(100) NOT NULL,
-            "category" varchar(100),
-            "length" numeric(10,2) DEFAULT 0,
-            "breadth" numeric(10,2) DEFAULT 0,
-            "height" numeric(10,2) DEFAULT 0,
-            "finish" varchar(100),
-            "material" varchar(100),
-            "imageUrl" varchar(500),
-            "imageUrls" text,
-            "description" text,
-            "status" varchar(50),
-            "createdAt" timestamp DEFAULT now() NOT NULL,
-            "updatedAt" timestamp DEFAULT now() NOT NULL,
-            CONSTRAINT "products_code_unique" UNIQUE("code")
-          );
-        `);
-
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS "wishlists" (
-            "id" serial PRIMARY KEY NOT NULL,
-            "userId" integer NOT NULL,
-            "productId" integer NOT NULL,
-            "createdAt" timestamp DEFAULT now() NOT NULL,
-            CONSTRAINT "wishlists_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action,
-            CONSTRAINT "wishlists_productId_products_id_fk" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action
-          );
-        `);
-
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS "user_sessions" (
-            "sid" varchar NOT NULL,
-            "sess" json NOT NULL,
-            "expire" timestamp(6) NOT NULL,
-            CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
-          );
-        `);
-
-        console.log('Database tables created successfully');
-      } else {
-        throw error; // Re-throw if it's a different error
-      }
-    }
-
-    // Check if primary admin already exists
-    const existingAdmin = await db.select().from(users).where(eq(users.isPrimaryAdmin, true)).limit(1);
-    
-    if (existingAdmin.length > 0) {
-      return res.json({ message: 'Database already initialized', admin: existingAdmin[0].name });
-    }
-
-    // Create primary admin with your WhatsApp number
-    const adminWhatsApp = '+918882636296';
-    const newAdmin = await db.insert(users).values({
-      name: 'Admin User',
-      whatsappNumber: adminWhatsApp,
-      password: null, // Will be set on first login
-      isAdmin: true,
-      isPrimaryAdmin: true,
-    }).returning();
-
-    res.json({ 
-      message: 'Database initialized successfully', 
-      admin: newAdmin[0].name,
-      whatsappNumber: newAdmin[0].whatsappNumber 
-    });
-  } catch (error) {
-    console.error('Database initialization error:', error);
-    res.status(500).json({ error: 'Failed to initialize database' });
-  }
-});
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -260,6 +149,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize database and run migrations on startup
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      await initializeDatabase();
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
+      process.exit(1);
+    }
+  }
+
   const server = await registerRoutes(app);
 
   // 404 handler for API routes
