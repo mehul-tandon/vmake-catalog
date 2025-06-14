@@ -126,26 +126,31 @@ app.post('/api/init-db', async (req: express.Request, res: express.Response) => 
           CREATE TABLE IF NOT EXISTS "products" (
             "id" serial PRIMARY KEY NOT NULL,
             "name" varchar(255) NOT NULL,
-            "description" text,
-            "price" numeric(10,2) NOT NULL,
+            "code" varchar(100) NOT NULL,
             "category" varchar(100),
+            "length" numeric(10,2) DEFAULT 0,
+            "breadth" numeric(10,2) DEFAULT 0,
+            "height" numeric(10,2) DEFAULT 0,
+            "finish" varchar(100),
+            "material" varchar(100),
             "imageUrl" varchar(500),
-            "isActive" boolean DEFAULT true NOT NULL,
+            "imageUrls" text,
+            "description" text,
+            "status" varchar(50),
             "createdAt" timestamp DEFAULT now() NOT NULL,
-            "updatedAt" timestamp DEFAULT now() NOT NULL
+            "updatedAt" timestamp DEFAULT now() NOT NULL,
+            CONSTRAINT "products_code_unique" UNIQUE("code")
           );
         `);
 
         await pool.query(`
-          CREATE TABLE IF NOT EXISTS "feedback" (
+          CREATE TABLE IF NOT EXISTS "wishlists" (
             "id" serial PRIMARY KEY NOT NULL,
-            "customerName" varchar(255) NOT NULL,
-            "customerWhatsApp" varchar(20) NOT NULL,
-            "productId" integer,
-            "message" text NOT NULL,
-            "rating" integer,
+            "userId" integer NOT NULL,
+            "productId" integer NOT NULL,
             "createdAt" timestamp DEFAULT now() NOT NULL,
-            CONSTRAINT "feedback_productId_products_id_fk" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE set null ON UPDATE no action
+            CONSTRAINT "wishlists_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action,
+            CONSTRAINT "wishlists_productId_products_id_fk" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action
           );
         `);
 
@@ -171,8 +176,8 @@ app.post('/api/init-db', async (req: express.Request, res: express.Response) => 
       return res.json({ message: 'Database already initialized', admin: existingAdmin[0].name });
     }
 
-    // Create primary admin
-    const adminWhatsApp = process.env.ADMIN_WHATSAPP || '+1234567890';
+    // Create primary admin with your WhatsApp number
+    const adminWhatsApp = '+918882636296';
     const newAdmin = await db.insert(users).values({
       name: 'Admin User',
       whatsappNumber: adminWhatsApp,
