@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+const multerStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = path.join(__dirname, '../dist/public/uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ 
-  storage: storage,
+  storage: multerStorage,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE || '104857600') // 100MB default
   },
@@ -269,7 +269,7 @@ class DatabaseStorage implements Storage {
 }
 
 // Create storage instance
-const storage: Storage = new DatabaseStorage();
+const dbStorage: Storage = new DatabaseStorage();
 
 export async function registerRoutes(app: Express) {
   const server = createServer(app);
@@ -403,7 +403,7 @@ export async function registerRoutes(app: Express) {
     }
     
     try {
-      const user = await storage.getUserByWhatsApp(req.session.userWhatsApp);
+      const user = await dbStorage.getUserByWhatsApp(req.session.userWhatsApp);
       if (!user || !user.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -422,7 +422,7 @@ export async function registerRoutes(app: Express) {
     }
 
     try {
-      const user = await storage.getUserByWhatsApp(req.session.userWhatsApp);
+      const user = await dbStorage.getUserByWhatsApp(req.session.userWhatsApp);
       if (!user) {
         req.session.destroy(() => {});
         return res.status(401).json({ message: "User not found" });
@@ -457,7 +457,7 @@ export async function registerRoutes(app: Express) {
       }
 
       // Check if user already exists
-      const existingUser = await storage.getUserByWhatsApp(whatsappNumber);
+      const existingUser = await dbStorage.getUserByWhatsApp(whatsappNumber);
       if (existingUser) {
         return res.status(400).json({ message: "User with this WhatsApp number already exists" });
       }
@@ -466,7 +466,7 @@ export async function registerRoutes(app: Express) {
       const hashedPassword = await bcrypt.hash(password, 12);
 
       // Create user
-      const newUser = await storage.createUser({
+      const newUser = await dbStorage.createUser({
         name,
         whatsappNumber,
         password: hashedPassword,
@@ -504,7 +504,7 @@ export async function registerRoutes(app: Express) {
       }
 
       // Find user
-      const user = await storage.getUserByWhatsApp(whatsappNumber);
+      const user = await dbStorage.getUserByWhatsApp(whatsappNumber);
       if (!user) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
@@ -536,10 +536,4 @@ export async function registerRoutes(app: Express) {
       });
     } catch (error) {
       console.error('Login error:', error);
-      res.status(500).json({ message: "Login failed. Please try again." });
-    }
-  });
-
-  app.post("/api/auth/admin-login", async (req, res) => {
-    try {
-     
+      res.status(500).json({ message: "Login
