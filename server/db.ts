@@ -1,6 +1,7 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import * as schema from "@shared/schema";
 
 // For local development without a real database
@@ -22,11 +23,11 @@ if (isDev && !process.env.DATABASE_URL) {
     update: () => ({ set: () => ({ where: () => ({ returning: () => [] }) }) }),
   };
 } else {
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL must be set. Did you forget to provision a database?",
+    );
+  }
 
   pool = new Pool({ 
     connectionString: process.env.DATABASE_URL,
@@ -34,7 +35,19 @@ if (!process.env.DATABASE_URL) {
       rejectUnauthorized: false
     } : false
   });
+  
   db = drizzle({ client: pool, schema });
+
+  // Auto-migrate in production if enabled
+  if (process.env.AUTO_MIGRATE === 'true') {
+    try {
+      console.log('Running database migrations...');
+      await migrate(db, { migrationsFolder: './drizzle' });
+      console.log('Database migrations completed');
+    } catch (error) {
+      console.error('Migration failed:', error);
+    }
+  }
 }
 
 export { pool, db };
