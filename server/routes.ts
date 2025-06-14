@@ -36,6 +36,26 @@ async function verifyPassword(password: string, hashedPassword: string): Promise
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint
+  app.get('/api/health', async (_req, res) => {
+    try {
+      // Test database connection
+      const result = await storage.testConnection();
+      res.json({
+        status: 'healthy',
+        database: result ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'unhealthy',
+        database: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Database initialization endpoint (for production deployment) - GET version
   app.get('/api/init-db', async (_req, res) => {
     try {
