@@ -43,8 +43,8 @@ app.use(helmet({
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutesß
-  max: isDevelopment ? 1000 : 500, // Higher limit for development
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isDevelopment ? 1000 : 1000, // Generous limit for both dev and production
   message: {
     error: "Too many requests from this IP, please try again later."
   },
@@ -56,25 +56,40 @@ const limiter = rateLimit({
   }
 });
 
-const authLimiter = rateLimit({
+// Separate rate limiters for different auth operations
+const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 100 : 5, // Much higher limit for development
+  max: isDevelopment ? 100 : 10, // 10 login attempts per 15 minutes
   message: {
-    error: "Too many authentication attempts, please try again later."
+    error: "Too many login attempts, please try again later."
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip auth rate limiting for localhost in development
+    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
+  }
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: isDevelopment ? 100 : 5, // 5 registrations per 5 minutes
+  message: {
+    error: "Too many registration attempts, please try again later."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
     return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
   }
 });
 
 // Apply rate limiting
 if (!isDevelopment) {
-  // Only apply rate limiting in production
+  // Only apply general rate limiting in production
   app.use(limiter);
-  app.use('/api/auth', authLimiter);
+  // Apply specific auth rate limiting to login/register endpoints only
+  app.use('/api/auth/admin-login', loginLimiter);
+  app.use('/api/auth/register', registerLimiter);
 } else {
   console.log('Rate limiting disabled for development environment');
 }
