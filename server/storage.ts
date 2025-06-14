@@ -1,8 +1,3 @@
-import dotenv from "dotenv";
-
-// Load environment variables from .env file
-dotenv.config();
-
 import { users, products, wishlists, type User, type InsertUser, type Product, type InsertProduct, type Wishlist, type InsertWishlist } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, sql, and, desc, asc } from "drizzle-orm";
