@@ -79,8 +79,40 @@ app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Session store configuration
+const isDevEnvironment = process.env.NODE_ENV === 'development';
+let sessionStore;
 
-// Database initialization endpoint (for production deployment)
+if (isDevEnvironment) {
+  // Use memory store for development
+  const MemoryStoreConstructor = MemoryStore(session);
+  sessionStore = new MemoryStoreConstructor({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  });
+} else {
+  // Use PostgreSQL store for production
+  const PgSession = connectPgSimple(session);
+  sessionStore = new PgSession({
+    pool: pool || undefined, // Use the existing database pool
+    tableName: 'user_sessions', // Use a custom table name
+    createTableIfMissing: true
+  });
+}
+
+// Session middleware
+app.use(session({
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET || 'default-session-secret-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Database initialization endpoint (for production deployment) - MOVED HERE BEFORE registerRoutes
 app.post('/api/init-db', async (req: express.Request, res: express.Response) => {
   try {
     console.log('Database initialization requested');
@@ -196,39 +228,6 @@ app.post('/api/init-db', async (req: express.Request, res: express.Response) => 
     res.status(500).json({ error: 'Failed to initialize database' });
   }
 });
-
-// Session store configuration
-const isDevEnvironment = process.env.NODE_ENV === 'development';
-let sessionStore;
-
-if (isDevEnvironment) {
-  // Use memory store for development
-  const MemoryStoreConstructor = MemoryStore(session);
-  sessionStore = new MemoryStoreConstructor({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  });
-} else {
-  // Use PostgreSQL store for production
-  const PgSession = connectPgSimple(session);
-  sessionStore = new PgSession({
-    pool: pool || undefined, // Use the existing database pool
-    tableName: 'user_sessions', // Use a custom table name
-    createTableIfMissing: true
-  });
-}
-
-// Session middleware
-app.use(session({
-  store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'default-session-secret-change-in-production',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
 
 app.use((req, res, next) => {
   const start = Date.now();
