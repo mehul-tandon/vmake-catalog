@@ -168,12 +168,17 @@ export default function AdminPanel() {
       await apiRequest("DELETE", `/api/products/${productId}`);
     },
     onSuccess: () => {
+      // First update the UI state
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setSelectedProducts(new Set());
-      toast({
-        title: "Product Deleted",
-        description: "Product successfully removed from catalogue",
-      });
+      
+      // Then show the toast notification after a small delay
+      setTimeout(() => {
+        toast({
+          title: "Product Deleted",
+          description: "Product successfully removed from catalogue",
+        });
+      }, 100);
     },
     onError: (error: any) => {
       toast({
@@ -192,12 +197,20 @@ export default function AdminPanel() {
       );
     },
     onSuccess: () => {
+      // Store the count before clearing the selection
+      const count = selectedProducts.size;
+      
+      // First update the UI state
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setSelectedProducts(new Set());
-      toast({
-        title: "Products Deleted",
-        description: `${selectedProducts.size} products successfully removed from catalogue`,
-      });
+      
+      // Then show the toast notification after a small delay
+      setTimeout(() => {
+        toast({
+          title: "Products Deleted",
+          description: `${count} products successfully removed from catalogue`,
+        });
+      }, 100);
     },
     onError: (error: any) => {
       toast({
@@ -222,15 +235,20 @@ export default function AdminPanel() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: editingProduct ? "Product Updated" : "Product Created",
-        description: editingProduct
-          ? "Product details have been updated"
-          : "New product has been added to the catalogue",
-      });
+      // First update the UI state
       setProductModalOpen(false);
       resetProductForm();
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Then show the toast notification after a small delay
+      setTimeout(() => {
+        toast({
+          title: editingProduct ? "Product Updated" : "Product Created",
+          description: editingProduct
+            ? "Product details have been updated"
+            : "New product has been added to the catalogue",
+        });
+      }, 100);
     },
     onError: (error: any) => {
       toast({
@@ -542,15 +560,19 @@ export default function AdminPanel() {
           throw new Error(error.message || "Failed to save user");
         }
 
-        toast({
-          title: selectedUser ? "User Updated" : "User Created",
-          description: selectedUser
-            ? `${payload.name} has been updated successfully`
-            : `${payload.name} has been added successfully`,
-        });
-
+        // First close the modal and update the UI
         setIsModalOpen(false);
         fetchUsers();
+        
+        // Then show the toast notification
+        setTimeout(() => {
+          toast({
+            title: selectedUser ? "User Updated" : "User Created",
+            description: selectedUser
+              ? `${payload.name} has been updated successfully`
+              : `${payload.name} has been added successfully`,
+          });
+        }, 100);
       } catch (error: any) {
         toast({
           title: "Error",
@@ -576,12 +598,16 @@ export default function AdminPanel() {
           throw new Error(error.message || "Failed to delete user");
         }
 
-        toast({
-          title: "User Deleted",
-          description: "User has been deleted successfully",
-        });
-
+        // First update the UI
         fetchUsers();
+        
+        // Then show the toast notification after a small delay
+        setTimeout(() => {
+          toast({
+            title: "User Deleted",
+            description: "User has been deleted successfully",
+          });
+        }, 100);
       } catch (error: any) {
         toast({
           title: "Error",
