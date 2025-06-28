@@ -97,7 +97,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.getUserByWhatsApp(whatsappNumber);
         if (!user) {
           user = await storage.createUser({ name, whatsappNumber });
-        }
+        } else {
+          // Check if the existing user is an admin
+          if (user.isAdmin) {
+            return res.status(403).json({
+              message: "Admin users must login through the admin page",
+              isAdmin: true
+            });
+          }
+        }   
       } catch (storageError) {
         console.error("Storage error:", storageError);
         return res.status(500).json({
