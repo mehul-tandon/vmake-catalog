@@ -50,11 +50,19 @@ export default function WhatsAppVerification() {
     },
     onError: (error: any) => {
       console.error("Registration error details:", error);
-      toast({
-        title: "Registration Failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+      if (error.message && error.message.includes("Admin users must login through the admin page")) {
+        toast({
+          title: "Admin Access Required",
+          description: "Admin users must login through the admin page.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        });
+      },
     },
   });
 
