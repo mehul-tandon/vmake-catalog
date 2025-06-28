@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   whatsappNumber: text("whatsapp_number").notNull().unique(),
+  city: text("city").notNull(),
   password: text("password"),
   isAdmin: boolean("is_admin").default(false),
   isPrimaryAdmin: boolean("is_primary_admin").default(false),
@@ -77,6 +78,7 @@ export const wishlistsRelations = relations(wishlists, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   whatsappNumber: true,
+  city: true,
 });
 
 export const adminLoginSchema = z.object({

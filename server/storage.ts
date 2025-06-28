@@ -78,6 +78,7 @@ export class MemStorage implements IStorage {
       id: this.currentUserId++,
       name: "Admin User",
       whatsappNumber: adminWhatsApp,
+      city: "Mumbai",
       password: null,
       isAdmin: true,
       isPrimaryAdmin: true,
@@ -253,6 +254,7 @@ export class MemStorage implements IStorage {
         timestamp: new Date().toISOString(),
         name: user.name,
         whatsappNumber: user.whatsappNumber,
+        city: user.city,
         id: user.id
       };
 
@@ -643,6 +645,7 @@ export class DatabaseStorage implements IStorage {
         timestamp: new Date().toISOString(),
         name: user.name,
         whatsappNumber: user.whatsappNumber,
+        city: user.city,
         id: user.id
       };
 

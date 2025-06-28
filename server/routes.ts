@@ -90,13 +90,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { name, whatsappNumber } = insertUserSchema.parse(req.body);
+      const { name, whatsappNumber, city } = insertUserSchema.parse(req.body);
 
       let user;
       try {
         user = await storage.getUserByWhatsApp(whatsappNumber);
         if (!user) {
-          user = await storage.createUser({ name, whatsappNumber });
+          user = await storage.createUser({ name, whatsappNumber, city: city || "Unknown" });
         } else {
           // Check if the existing user is an admin
           if (user.isAdmin) {
@@ -784,7 +784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { name, whatsappNumber, password, isAdmin } = req.body;
+      const { name, whatsappNumber, city, password, isAdmin } = req.body;
 
       // Check if user already exists
       const existingUser = await storage.getUserByWhatsApp(whatsappNumber);
@@ -793,7 +793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create new user
-      const user = await storage.createUser({ name, whatsappNumber });
+      const user = await storage.createUser({ name, whatsappNumber, city: city || "Unknown" });
 
       // Set password and admin status if provided
       if (password || isAdmin) {
@@ -842,7 +842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = parseInt(req.params.id);
-      const { name, whatsappNumber, password, isAdmin, isPrimaryAdmin } = req.body;
+      const { name, whatsappNumber, city, password, isAdmin, isPrimaryAdmin } = req.body;
 
       // Get user to update
       const user = await storage.getUser(userId);
@@ -860,6 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (name) updates.name = name;
       if (whatsappNumber) updates.whatsappNumber = whatsappNumber;
+      if (city) updates.city = city;
       if (password) updates.password = await hashPassword(password);
 
       // Admin privileges - only primary admin can set these
@@ -944,6 +945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "No.": index + 1,
         "Name": user.name,
         "WhatsApp Number": user.whatsappNumber,
+        "City": user.city || "N/A",
         "Admin": user.isAdmin ? "Yes" : "No",
         "Primary Admin": user.isPrimaryAdmin ? "Yes" : "No",
         "Registered On": new Date(user.createdAt!).toLocaleDateString()

@@ -471,6 +471,7 @@ export default function AdminPanel() {
     const [formData, setFormData] = useState({
       name: "",
       whatsappNumber: "",
+      city: "",
       password: "",
       isAdmin: false,
       isPrimaryAdmin: false,
@@ -634,6 +635,7 @@ export default function AdminPanel() {
         setFormData({
           name: user.name,
           whatsappNumber: user.whatsappNumber,
+          city: user.city || "",
           password: "", // Don't populate password for security
           isAdmin: user.isAdmin,
           isPrimaryAdmin: user.isPrimaryAdmin,
@@ -644,6 +646,7 @@ export default function AdminPanel() {
         setFormData({
           name: "",
           whatsappNumber: "",
+          city: "",
           password: "",
           isAdmin: false,
           isPrimaryAdmin: false,
@@ -696,6 +699,7 @@ export default function AdminPanel() {
                 <tr className="border-b border-black-accent">
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Name</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">WhatsApp</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">City</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Admin Status</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Created</th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-gray-300">Actions</th>
@@ -706,6 +710,7 @@ export default function AdminPanel() {
                   <tr key={user.id} className="border-b border-black-accent">
                     <td className="px-4 py-3 text-white">{user.name}</td>
                     <td className="px-4 py-3 text-white">{user.whatsappNumber}</td>
+                    <td className="px-4 py-3 text-white">{user.city || "N/A"}</td>
                     <td className="px-4 py-3">
                       {user.isPrimaryAdmin ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold text-black-primary">
@@ -800,6 +805,17 @@ export default function AdminPanel() {
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Enter user city"
+                  className="bg-black-primary border-black-accent"
+                />
               </div>
 
               <div>
@@ -1752,6 +1768,10 @@ export default function AdminPanel() {
                       <div>
                         <span className="text-gray-400">WhatsApp:</span>
                         <p className="text-white font-medium">{selectedUser.user.whatsappNumber}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">City:</span>
+                        <p className="text-white font-medium">{selectedUser.user.city || "N/A"}</p>
                       </div>
                       <div>
                         <span className="text-gray-400">Admin Status:</span>

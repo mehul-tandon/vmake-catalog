@@ -11,10 +11,11 @@ import vmakeLogo from "@assets/339076826_1147709369229224_1319750110613322317_n.
 export default function WhatsAppVerification() {
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [city, setCity] = useState("");
   const { toast } = useToast();
 
   const submitMutation = useMutation({
-    mutationFn: async (data: { name: string; whatsappNumber: string }) => {
+    mutationFn: async (data: { name: string; whatsappNumber: string; city: string }) => {
       const MAX_RETRIES = 2;
       let lastError;
       
@@ -88,13 +89,23 @@ export default function WhatsAppVerification() {
       return;
     }
 
+    if (!city.trim()) {
+      toast({
+        title: "City Required",
+        description: "Please enter your city.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formattedNumber = phoneNumber.startsWith("+91") 
       ? phoneNumber 
       : `+91${phoneNumber.replace(/^0+/, "")}`;
     
     submitMutation.mutate({ 
       name: name.trim(), 
-      whatsappNumber: formattedNumber 
+      whatsappNumber: formattedNumber,
+      city: city.trim()
     });
   };
 
@@ -146,6 +157,20 @@ export default function WhatsAppVerification() {
                   disabled={submitMutation.isPending}
                 />
               </div>
+            </div>
+            
+            <div>
+              <Label className="block text-sm font-medium text-gray-300 mb-2">
+                City
+              </Label>
+              <Input
+                type="text"
+                placeholder="Enter your city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="bg-black-primary border-black-accent text-white placeholder-gray-500 search-focus"
+                disabled={submitMutation.isPending}
+              />
             </div>
             
             <Button
