@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               isAdmin: true
             });
           }
-        }   
+        }
       } catch (storageError) {
         console.error("Storage error:", storageError);
         return res.status(500).json({
