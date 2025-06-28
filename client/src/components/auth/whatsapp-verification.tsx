@@ -50,6 +50,8 @@ export default function WhatsAppVerification() {
     },
     onError: (error: any) => {
       console.error("Registration error details:", error);
+      
+      // Check if this is an admin user trying to login through regular flow
       if (error.message && error.message.includes("Admin users must login through the admin page")) {
         toast({
           title: "Admin Access Required",
@@ -62,7 +64,7 @@ export default function WhatsAppVerification() {
           description: error.message || "Please try again.",
           variant: "destructive",
         });
-      },
+      }
     },
   });
 
