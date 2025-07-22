@@ -3,7 +3,7 @@ services:
     name: vmake-product-catalog
     env: node
     plan: free
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /
     envVars:
@@ -12,12 +12,12 @@ services:
       - key: DATABASE_URL
         # Replace with your actual PostgreSQL database URL
         # Format: postgres://username:password@host:port/database?sslmode=require
-        value: YOUR_DATABASE_URL_HERE
+        value: YOUR_DATABASE_URL_HERE # IMPORTANT: Replace with your actual database URL
       - key: SESSION_SECRET
         generateValue: true
       - key: ADMIN_WHATSAPP
         # Replace with your admin WhatsApp number
-        value: YOUR_ADMIN_WHATSAPP_NUMBER
+        value: YOUR_ADMIN_WHATSAPP_NUMBER # IMPORTANT: Replace with your admin WhatsApp number
       - key: BCRYPT_SALT_ROUNDS
         value: 12
       - key: RATE_LIMIT_WINDOW_MS
